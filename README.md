@@ -1,0 +1,22 @@
+# LumaPocket
+
+A personal iOS build workspace. This repository contains only the build workflow,
+its tooling, and an encrypted source snapshot. The primary project and its Git
+history are not published here.
+
+## Build for your own iPhone
+
+1. Open **Actions → iOS self-test → Run workflow**.
+2. Download the successful run's artifact. It contains an unsigned `.ipa`, its
+   SHA-256 checksum, and a build verification report.
+3. Sign and install the IPA on Windows using your own Apple account in
+   [Sideloadly](https://sideloadly.io/).
+
+Free Apple account signatures normally need refreshing every seven days.
+The workflow does not require an Apple ID, developer certificate, or App Store
+Connect access. It does not publish to TestFlight or the App Store.
+
+The source snapshot is encrypted with GPG AES-256. Its passphrase is held in the
+repository secret `BUILD_SOURCE_PASSPHRASE`, available only to trusted builds.
+Fork and pull-request builds do not run this workflow. Artifacts expire after
+seven days; run it again when needed.

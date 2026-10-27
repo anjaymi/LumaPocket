@@ -1,0 +1,15 @@
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/build.json
+!/.github/
+!/.github/**
+!/ci/
+!/ci/**
+!/source/
+/source/*
+!/source/source.tar.gz.gpg
+
+__pycache__/
+*.pyc
