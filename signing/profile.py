@@ -10,6 +10,14 @@ from common import SigningError, executable, run_private
 UTC = dt.timezone.utc
 
 
+def validate_local_inputs(udid, anisette_url):
+    if not re.fullmatch(r"(?:[0-9A-Fa-f]{8}-[0-9A-Fa-f]{16}|[0-9A-Fa-f]{40})", udid):
+        raise SigningError("invalid_device_udid")
+    server = urlsplit(anisette_url)
+    if server.scheme != "https" or not server.hostname or server.username or server.password or server.query or server.fragment:
+        raise SigningError("https_anisette_server_required")
+
+
 def utc(value):
     return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
 
@@ -21,14 +29,10 @@ def identity_from(path):
         raise SigningError("invalid_team_identity")
     if identity.get("bundleIdentifier") != "io.lumapocket.client." + team.lower():
         raise SigningError("invalid_app_identity")
-    if not re.fullmatch(r"(?:[0-9A-Fa-f]{8}-[0-9A-Fa-f]{16}|[0-9A-Fa-f]{40})", identity.get("deviceUdid", "")):
-        raise SigningError("invalid_device_udid")
+    validate_local_inputs(identity.get("deviceUdid", ""), identity.get("anisetteURL", ""))
     for key in ("sessionPassword", "machinePassword", "p12Password"):
         if len(identity.get(key, "")) < 32:
             raise SigningError("incomplete_authorized_state")
-    server = urlsplit(identity.get("anisetteURL", ""))
-    if server.scheme != "https" or not server.hostname or server.username or server.password or server.query or server.fragment:
-        raise SigningError("https_anisette_server_required")
     return identity
 
 

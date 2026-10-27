@@ -17,6 +17,9 @@ from profile import UTC, ensure_extended, renewal_due, validate
 from sign_ipa import check_zip
 from storage import crypt, export_state, extract_state
 from tool import safe_name
+from apple import Apple
+from profile import validate_local_inputs
+from unittest import mock
 
 
 class ProfileChecks(unittest.TestCase):
@@ -198,9 +201,31 @@ class TrustChecks(unittest.TestCase):
         self.assertRaises(SigningError, SafeRedirect().redirect_request, request, None, 302, "Found", {}, "http://example.org/artifact")
 
     def test_child_does_not_inherit_signing_or_github_secrets(self):
-        env = private_env(Path(tempfile.gettempdir()))
+        with mock.patch.dict(os.environ, {"GITHUB_TOKEN": "fixture-token", "IOS_SIGNING_PASSPHRASE": "fixture-key"}):
+            env = private_env(Path(tempfile.gettempdir()))
         self.assertNotIn("GITHUB_TOKEN", env)
         self.assertNotIn("IOS_SIGNING_PASSPHRASE", env)
+
+    def test_free_personal_team_is_required(self):
+        apple = Apple("fixture", Path(tempfile.gettempdir()), {})
+        apple.portal = lambda *args: " * Own (ID: TESTTEAM01, Type: 3)"
+        self.assertEqual(apple.personal_team(), "TESTTEAM01")
+
+    def test_multiple_teams_are_not_silently_selected(self):
+        apple = Apple("fixture", Path(tempfile.gettempdir()), {})
+        apple.portal = lambda *args: " * A (ID: TESTTEAM01, Type: 3)\n * B (ID: OTHERTEAM1, Type: 2)"
+        self.assertRaisesRegex(SigningError, "single_personal_team", apple.personal_team)
+
+    def test_account_team_change_is_rejected(self):
+        apple = Apple("fixture", Path(tempfile.gettempdir()), {"teamId": "OTHERTEAM1"})
+        apple.portal = lambda *args: " * Own (ID: TESTTEAM01, Type: 3)"
+        self.assertRaisesRegex(SigningError, "team_changed", apple.personal_team)
+
+    def test_udid_checked_before_login(self):
+        self.assertRaisesRegex(SigningError, "invalid_device_udid", validate_local_inputs, "serial-not-udid", "https://example.org")
+
+    def test_insecure_anisette_url_rejected(self):
+        self.assertRaisesRegex(SigningError, "https_anisette", validate_local_inputs, "00000000-0000000000000000", "http://example.org")
 
     @unittest.skipUnless(os.name == "nt", "Windows DPAPI")
     def test_windows_local_key_round_trip(self):

@@ -20,6 +20,13 @@ The source snapshot is encrypted with GPG AES-256. Its passphrase is held in the
 repository secret `BUILD_SOURCE_PASSPHRASE`, available only to trusted builds.
 Fork and pull-request builds do not run this workflow. Artifacts expire after
 seven days; run it again when needed.
+
+## Experimental free-account renewal
+
+[Setup and current limits](signing/README.md). Initial Apple authorization happens
+on your Windows computer. Scheduled expiry checks remain disabled until the
+first cloud signing run verifies a package for your own device.
+
 ## Self-test scope
 
 The ARM64 release build and exported offline-tokenizer symbols are checked by CI.

@@ -15,7 +15,7 @@ from apple import Apple
 from common import SigningError, run_private
 from github_api import GitHub, REPOSITORY
 from local_key import state_key
-from profile import identity_from
+from profile import identity_from, validate_local_inputs
 from storage import crypt, export_state, extract_state
 from tool import check, install
 
@@ -53,6 +53,7 @@ def authorize(home, args, password):
                         "p12Password": session_password, "machinePassword": secrets.token_urlsafe(48),
                         "anisetteURL": args.anisette_url}
             identity["deviceUdid"] = args.udid or input("iPhone UDID (from Apple Devices/iTunes): ").strip()
+        validate_local_inputs(identity["deviceUdid"], identity["anisetteURL"])
         apple_id = args.apple_id or input("Apple Account email: ").strip()
         if not apple_id or "@" not in apple_id:
             raise SigningError("apple_account_required")
