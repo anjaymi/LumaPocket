@@ -20,3 +20,10 @@ The source snapshot is encrypted with GPG AES-256. Its passphrase is held in the
 repository secret `BUILD_SOURCE_PASSPHRASE`, available only to trusted builds.
 Fork and pull-request builds do not run this workflow. Artifacts expire after
 seven days; run it again when needed.
+## Self-test scope
+
+The ARM64 release build and exported offline-tokenizer symbols are checked by CI.
+Physical iPhone testing is still required. The current file-selector plugin does
+not provide save-location or directory dialogs on iOS. Generated images remain in
+the application's Documents folder, exposed through the iOS Files app for this
+self-test build.
