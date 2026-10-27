@@ -7,7 +7,7 @@ import stat
 import zipfile
 from pathlib import Path
 from common import SigningError, run_private
-from profile import decode_profile, validate
+from profile import certificate_expiry, decode_profile, validate
 from tool import safe_name
 
 
@@ -54,7 +54,7 @@ def sign(tool, state, identity, certificate, build):
     profile = app / "embedded.mobileprovision"
     if profile.read_bytes() != (state / "profile.mobileprovision").read_bytes():
         raise SigningError("embedded_profile_changed")
-    expires = validate(decode_profile(profile, state), identity, certificate)
+    expires = min(validate(decode_profile(profile, state), identity, certificate), certificate_expiry(certificate, state))
     entitlement_data = run_private(["codesign", "-d", "--entitlements", "-", "--xml", str(app)], state, "signed_entitlements")
     entitlements = plistlib.loads(entitlement_data)
     if entitlements.get("application-identifier") != identity["teamId"] + "." + identity["bundleIdentifier"]:

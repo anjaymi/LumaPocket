@@ -3,6 +3,7 @@ import datetime as dt
 import json
 import plistlib
 import re
+import ssl
 from pathlib import Path
 from urllib.parse import urlsplit
 from common import SigningError, executable, run_private
@@ -49,6 +50,15 @@ def certificate_der(p12, password, root):
     pem = run_private([executable("openssl"), "pkcs12", "-in", str(p12), "-passin", "stdin", "-clcerts", "-nokeys"],
                       root, "identity_certificate", data=(password + "\n").encode())
     return run_private([executable("openssl"), "x509", "-outform", "DER"], root, "certificate_decode", data=pem)
+
+
+def certificate_expiry(certificate, root):
+    value = run_private([executable("openssl"), "x509", "-inform", "DER", "-enddate", "-noout"],
+                        root, "certificate_expiry", data=certificate).decode().strip()
+    try:
+        return dt.datetime.fromtimestamp(ssl.cert_time_to_seconds(value.split("=", 1)[1]), tz=UTC)
+    except (ValueError, IndexError):
+        raise SigningError("invalid_certificate_expiry") from None
 
 
 def validate(profile, identity, certificate, now=None, minimum_hours=12):

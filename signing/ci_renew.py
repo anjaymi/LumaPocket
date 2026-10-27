@@ -9,7 +9,7 @@ from pathlib import Path
 from apple import Apple
 from common import SigningError
 from github_api import GitHub
-from profile import UTC, certificate_der, decode_profile, ensure_extended, identity_from, renewal_due, utc, validate
+from profile import UTC, certificate_der, certificate_expiry, decode_profile, ensure_extended, identity_from, renewal_due, utc, validate
 from sign_ipa import sign
 from storage import crypt, export_diagnostics, export_state, extract_state
 from tool import install
@@ -36,6 +36,9 @@ def renew(root, out, password):
     build = json.loads((Path(__file__).resolve().parents[1] / "build.json").read_text())
     changed = github.unsigned(state, build)
     certificate = certificate_der(state / "certificate.p12", identity["p12Password"], state)
+    cert_expires = certificate_expiry(certificate, state)
+    if renewal_due(cert_expires):
+        raise SigningError("certificate_replacement_requires_local_authorization")
     previous = None
     profile = state / "profile.mobileprovision"
     if profile.is_file():
