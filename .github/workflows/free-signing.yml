@@ -15,6 +15,8 @@ on:
   push:
     branches: [main]
     paths: ['signing/**', '.github/workflows/free-signing.yml']
+  schedule:
+    - cron: '37 2 * * *'
 
 permissions:
   contents: read
@@ -37,4 +39,39 @@ jobs:
         with:
           persist-credentials: false
       - name: Check frozen signing tool without an Apple account
-        run: python signing/tool.py --root "${{ runner.temp }}/lumapocket-signing-tool"
+        run: python signing/check.py
+      - name: Upload tool verification only
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: Signing-tool-check-${{ runner.os }}
+          path: ${{ runner.temp }}/lumapocket-signing-check-out/*.json
+          if-no-files-found: error
+          retention-days: 7
+  renew:
+    if: github.repository == 'anjaymi/LumaPocket' && github.ref == 'refs/heads/main' && github.actor == 'anjaymi' && ((github.event_name == 'workflow_dispatch' && inputs.mode == 'renew') || (github.event_name == 'schedule' && vars.FREE_SIGNING_ENABLED == 'true'))
+    runs-on: macos-15
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Renew free profile and verify signed app
+        id: renew
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          IOS_SIGNING_PASSPHRASE: ${{ secrets.IOS_SIGNING_PASSPHRASE }}
+          IOS_SIGNING_STATE_BASE64: ${{ secrets.IOS_SIGNING_STATE_BASE64 }}
+          RESET_SIGNING_STATE: ${{ inputs.reset_state || false }}
+        run: python signing/ci_renew.py
+      - name: Upload encrypted signing files
+        if: always() && steps.renew.outputs.publish == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: LumaPocket-free-sign
+          path: ${{ runner.temp }}/lumapocket-signing-out/*
+          if-no-files-found: error
+          retention-days: 10
+          compression-level: 0

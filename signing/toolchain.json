@@ -15,5 +15,11 @@
   },
   "version": "0.1.7",
   "sourceRevision": "10b446fc6fc47fe81b60879dfb126d0c8098ec29",
-  "sourceRepository": "https://github.com/SideStore/SideSign"
+  "sourceRepository": "https://github.com/SideStore/SideSign",
+  "windowsRuntime": {
+    "file": "windows-runtime.zip",
+    "sha256": "de55adfe0d9a9a4a2219ed8b218116a2d0690810916b7425fbc0b51647aaab6a",
+    "swiftVersion": "6.0.3",
+    "sourceSha256": "ab205d83a38047882db80e6a88c7d33b651f3bac96d4515d7cba5335f37999d3"
+  }
 }

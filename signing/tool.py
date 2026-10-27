@@ -18,7 +18,7 @@ def safe_name(name):
     path = PurePosixPath(normalized)
     if not normalized or path.is_absolute() or ".." in path.parts or "\\" in name or ":" in name:
         raise ValueError("Unsafe archive member")
-    return normalized
+    return path.as_posix()
 
 
 def download(url, destination, limit=128 * 1024 * 1024):
@@ -81,6 +81,21 @@ def install(root):
     candidates = list(binaries.rglob(name))
     if len(candidates) != 1:
         raise ValueError("Expected exactly one signing executable")
+    if os.name == "nt":
+        runtime = config.get("windowsRuntime")
+        if runtime is None:
+            raise RuntimeError("Portable Swift runtime must be configured")
+        runtime_zip = HERE / runtime["file"]
+        if hashlib.sha256(runtime_zip.read_bytes()).hexdigest() != runtime["sha256"]:
+            raise ValueError("Swift runtime checksum mismatch")
+        with zipfile.ZipFile(runtime_zip) as package:
+            seen = set()
+            for member in package.infolist():
+                entry = safe_name(member.filename)
+                if "/" in entry or entry in seen or member.file_size > 128 * 1024 * 1024 or stat.S_ISLNK(member.external_attr >> 16):
+                    raise ValueError("Unsafe runtime entry")
+                seen.add(entry)
+                (candidates[0].parent / entry).write_bytes(package.read(member))
     return candidates[0].resolve()
 
 
