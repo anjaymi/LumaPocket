@@ -14,14 +14,14 @@ if not (sdk / "bin/flutter").is_file():
     root.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temporary:
         index = Path(temporary) / "releases.json"
-        base = "https://storage.googleapis.com/flutter_infra_release/flutter"
-        subprocess.run(["curl", "--fail", "--location", "--retry", "3", "--connect-timeout", "20", "--max-time", "180", "-o", str(index), base + "/releases/releases_macos.json"], check=True)
+        base = "https://storage.googleapis.com/flutter_infra_release/releases"
+        subprocess.run(["curl", "--fail", "--location", "--retry", "3", "--connect-timeout", "20", "--max-time", "180", "-o", str(index), base + "/releases_macos.json"], check=True)
         releases = json.loads(index.read_text())
         arch = "arm64" if platform.machine() == "arm64" else "x64"
         release = next(item for item in releases["releases"] if item["version"] == version and item["channel"] == "stable" and item.get("dart_sdk_arch", "x64") == arch)
         archive = Path(temporary) / "flutter.zip"
         subprocess.run(["curl", "--fail", "--location", "--retry", "3", "--connect-timeout", "20", "--max-time", "600", "-o", str(archive), releases["base_url"] + "/" + release["archive"]], check=True)
-        assert hashlib.sha256(archive.read_bytes()).hexdigest() == release["sha256"]
+        assert hashlib.file_digest(archive.open("rb"), "sha256").hexdigest() == release["sha256"]
         subprocess.run(["ditto", "-xk", str(archive), str(root)], check=True)
 with open(os.environ["GITHUB_PATH"], "a") as stream:
     stream.write(str(sdk / "bin") + "\n")
