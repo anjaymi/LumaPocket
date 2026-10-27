@@ -2,6 +2,7 @@
 import io
 import os
 import tarfile
+import tempfile
 from pathlib import Path
 from common import SigningError, executable, run_private
 
@@ -13,14 +14,30 @@ REQUIRED_FILES = {"identity.json", "session.dat", "machine.dat", "certificate.p1
 def crypt(source, destination, password, root, decrypt=False):
     if len(password) < 32 or "\n" in password or "\r" in password:
         raise SigningError("invalid_state_passphrase")
-    home = (Path(root) / "gnupg").resolve()
-    home.mkdir(parents=True, exist_ok=True)
-    if os.name != "nt":
-        home.chmod(0o700)
-    home_arg = str(home)
+    # Agent socket paths are limited on macOS and in Git for Windows' MSYS.
+    # Keep the GPG home separate from potentially long private work paths.
+    with tempfile.TemporaryDirectory(prefix="lp-gpg-", dir="/tmp" if os.name != "nt" else None) as short_home:
+        home = Path(short_home)
+        if os.name != "nt":
+            home.chmod(0o700)
+        try:
+            _crypt(source, destination, password, root, home, decrypt)
+        finally:
+            try:
+                run_private([executable("gpgconf"), "--homedir", _home_arg(home), "--kill", "gpg-agent"],
+                            root, "isolated_agent_cleanup", timeout=15)
+            except SigningError:
+                pass
+
+
+def _home_arg(home):
     if os.name == "nt" and home.drive:
-        home_arg = "/" + home.drive[0].lower() + home.as_posix()[2:]
-    args = [executable("gpg"), "--homedir", home_arg, "--batch", "--yes", "--pinentry-mode", "loopback",
+        return "/" + home.drive[0].lower() + home.as_posix()[2:]
+    return str(home)
+
+
+def _crypt(source, destination, password, root, home, decrypt):
+    args = [executable("gpg"), "--no-options", "--homedir", _home_arg(home), "--batch", "--yes", "--pinentry-mode", "loopback",
             "--no-symkey-cache", "--passphrase-fd", "0", "--output", str(destination)]
     args += ["--decrypt"] if decrypt else ["--symmetric", "--cipher-algo", "AES256", "--compress-level", "0"]
     run_private(args + [str(source)], root, "state_decryption" if decrypt else "state_encryption",

@@ -142,6 +142,21 @@ class ArchiveChecks(unittest.TestCase):
         self.assertEqual((output / "session.dat").read_bytes(), b"SS02fixture")
         self.assertRaises(SigningError, crypt, encrypted, self.root / "wrong.tar", key + "wrong", self.root, True)
 
+    def test_gpg_long_private_directory(self):
+        root = self.root / ("long-" + "x" * 75)
+        root.mkdir()
+        source = root / "fixture.txt"
+        source.write_bytes(b"public-offline-fixture")
+        encrypted, restored = root / "fixture.gpg", root / "restored.txt"
+        key = "fixture-passphrase-only-not-an-account-key-123456"
+        try:
+            crypt(source, encrypted, key, root)
+            crypt(encrypted, restored, key, root, decrypt=True)
+        except SigningError:
+            # This test has only fixed public fixture data, never an account.
+            self.fail("Offline GPG fixture failed: " + (root / "diagnostics.log").read_text(errors="replace"))
+        self.assertEqual(source.read_bytes(), restored.read_bytes())
+
     def test_public_errors_do_not_echo_private_output(self):
         import sys
         secret = "TEST_PRIVATE_VALUE_NOT_A_REAL_TOKEN"
