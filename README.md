@@ -21,11 +21,17 @@ repository secret `BUILD_SOURCE_PASSPHRASE`, available only to trusted builds.
 Fork and pull-request builds do not run this workflow. Artifacts expire after
 seven days; run it again when needed.
 
-## Experimental free-account renewal
+## Free personal signing for friends
 
-[Setup and current limits](signing/README.md). Initial Apple authorization happens
-on your Windows computer. Scheduled expiry checks remain disabled until the
-first cloud signing run verifies a package for your own device.
+[Setup and current limits](signing/README.md). Each tester uses their own Apple
+account and a separate public GitHub repository with its own encryption key.
+Run `signing\start.cmd` on Windows to create/select your personal repository and
+authorize locally. Daily signing stays disabled until the first cloud signature
+for that authorization is verified. Device installation/refresh is still required.
+
+Unsigned builds are shared through public Releases; personal signing certificates,
+sessions and signed packages are encrypted in each tester's repository. Testers do
+not need access to the encrypted application source or its build secret.
 
 ## Self-test scope
 

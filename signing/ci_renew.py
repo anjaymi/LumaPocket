@@ -10,15 +10,18 @@ from apple import Apple
 from common import SigningError
 from github_api import GitHub
 from profile import UTC, certificate_der, certificate_expiry, decode_profile, ensure_extended, identity_from, renewal_due, utc, validate
+from repository import Scope, assert_identity_scope
 from sign_ipa import sign
 from storage import crypt, export_diagnostics, export_state, extract_state
 from tool import install
 
 
-def renew(root, out, password):
+def renew(root, out, password, scope):
     state = root / "state"
     encrypted = root / "restored-state.gpg"
-    github = GitHub(os.environ["GITHUB_TOKEN"])
+    github = GitHub(os.environ["GITHUB_TOKEN"], scope)
+    if Scope.from_metadata(github.get("")) != scope:
+        raise SigningError("repository_identity_changed")
     reset = os.environ.get("RESET_SIGNING_STATE", "false") == "true"
     restored = not reset and github.restore_state(encrypted, root)
     if not restored:
@@ -33,8 +36,8 @@ def renew(root, out, password):
     crypt(encrypted, raw, password, root, decrypt=True)
     extract_state(raw, state)
     identity = identity_from(state / "identity.json")
-    build = json.loads((Path(__file__).resolve().parents[1] / "build.json").read_text())
-    changed = github.unsigned(state, build)
+    assert_identity_scope(identity, scope)
+    build, changed = github.unsigned(state)
     certificate = certificate_der(state / "certificate.p12", identity["p12Password"], state)
     cert_expires = certificate_expiry(certificate, state)
     if renewal_due(cert_expires):
@@ -63,6 +66,8 @@ def renew(root, out, password):
     report = sign(tool, state, identity, certificate, build)
     report.update(profileExtended=previous is None or fresh > previous,
                   runId=int(os.environ["GITHUB_RUN_ID"]), sourceRevision=os.environ["GITHUB_SHA"],
+                  repositoryScope=scope.as_dict(),
+                  unsignedBuildUpdateCheck=json.loads((state / "unsigned-build.json").read_text()).get("updateCheck", "current"),
                   bootstrapStateSha256=hashlib.sha256(base64.b64decode(os.environ["IOS_SIGNING_STATE_BASE64"], validate=True)).hexdigest())
     (state / "last-success.json").write_text(json.dumps(report))
     crypt(state / "signed.ipa", out / "LumaPocket_signed.ipa.gpg", password, root)
@@ -72,8 +77,7 @@ def renew(root, out, password):
 
 
 def main():
-    if os.environ.get("GITHUB_REPOSITORY") != "anjaymi/LumaPocket" or os.environ.get("GITHUB_REF") != "refs/heads/main":
-        raise SigningError("trusted_main_branch_required")
+    scope = Scope.from_environment(os.environ)
     root = Path(os.environ["RUNNER_TEMP"]) / "lumapocket-private-signing"
     root.mkdir(mode=0o700, exist_ok=True)
     out = Path(os.environ["RUNNER_TEMP"]) / "lumapocket-signing-out"
@@ -82,11 +86,11 @@ def main():
     try:
         if len(password) < 32 or not os.environ.get("IOS_SIGNING_STATE_BASE64"):
             raise SigningError("initial_local_authorization_required")
-        report = renew(root, out, password)
+        report = renew(root, out, password, scope)
         print("Signing experiment: " + report["status"])
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
             summary.write("Free-signing experiment: **" + report["status"] + "**.\n\n")
-            summary.write("Expiry: " + report["expiresAt"] + ". Installation/refresh on the iPhone is still required.\n")
+            summary.write("Expiry: " + report["expiresAt"] + ". Installation/refresh on your iPhone or iPad is still required.\n")
         return 0
     except Exception as error:
         code = str(error) if isinstance(error, SigningError) else "unexpected_signing_failure"

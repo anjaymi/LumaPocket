@@ -32,7 +32,7 @@ class Apple:
     def ensure_registration(self):
         i = self.identity
         if i["deviceUdid"] not in self.portal("devices", "list"):
-            self.portal("devices", "register", "--name", "LumaPocket test iPhone", "--udid", i["deviceUdid"])
+            self.portal("devices", "register", "--name", "LumaPocket personal iPhone or iPad", "--udid", i["deviceUdid"])
         if i["bundleIdentifier"] not in self.portal("appids", "list"):
             self.portal("appids", "register", "--name", "LumaPocket", "--bundle-id", i["bundleIdentifier"])
 

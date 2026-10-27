@@ -182,7 +182,7 @@ class TrustChecks(unittest.TestCase):
     def setUp(self):
         self.run = {"status": "completed", "conclusion": "success", "head_branch": "main",
                     "workflow_id": 123, "head_repository": {"id": REPOSITORY_ID},
-                    "actor": {"login": "anjaymi"}, "event": "workflow_dispatch"}
+                    "actor": {"login": "anjaymi", "id": 129140237}, "event": "workflow_dispatch"}
 
     def test_owner_run_accepted(self):
         self.assertTrue(trusted_run(self.run, 123))

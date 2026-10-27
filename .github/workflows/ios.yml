@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.repository_owner == 'anjaymi' && github.actor == 'anjaymi'
+    if: github.repository_id == '1435778522' && github.actor_id == '129140237' && github.ref == 'refs/heads/main'
     runs-on: macos-15
     timeout-minutes: 60
     env:
@@ -62,3 +62,19 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           compression-level: 0
+  publish:
+    needs: build
+    if: github.repository_id == '1435778522' && github.actor_id == '129140237' && github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Publish verified unsigned files for personal signing repositories
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 ci/publish_unsigned.py

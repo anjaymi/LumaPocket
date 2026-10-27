@@ -22,12 +22,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: free-signing-experiment
+  group: free-signing-${{ github.repository_id }}
   cancel-in-progress: false
 
 jobs:
   validate:
-    if: github.repository == 'anjaymi/LumaPocket' && github.actor == 'anjaymi' && (github.event_name == 'push' || inputs.mode == 'validate')
+    if: github.repository_owner == github.actor && (github.event_name == 'push' || inputs.mode == 'validate')
     strategy:
       fail-fast: false
       matrix:
@@ -40,6 +40,11 @@ jobs:
           persist-credentials: false
       - name: Check frozen signing tool without an Apple account
         run: python signing/check.py
+      - name: Verify public build feed from this personal repository
+        if: runner.os == 'macOS'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python signing/check_public_feed.py
       - name: Upload tool verification only
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
@@ -48,7 +53,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
   renew:
-    if: github.repository == 'anjaymi/LumaPocket' && github.ref == 'refs/heads/main' && github.actor == 'anjaymi' && ((github.event_name == 'workflow_dispatch' && inputs.mode == 'renew') || (github.event_name == 'schedule' && vars.FREE_SIGNING_ENABLED == 'true'))
+    if: github.repository_owner == github.actor && github.ref == 'refs/heads/main' && github.repository_id == vars.SIGNING_REPOSITORY_ID && github.repository_owner_id == vars.SIGNING_OWNER_ID && ((github.event_name == 'workflow_dispatch' && inputs.mode == 'renew') || (github.event_name == 'schedule' && vars.FREE_SIGNING_ENABLED == 'true'))
     runs-on: macos-15
     timeout-minutes: 20
     permissions:
@@ -65,6 +70,8 @@ jobs:
           IOS_SIGNING_PASSPHRASE: ${{ secrets.IOS_SIGNING_PASSPHRASE }}
           IOS_SIGNING_STATE_BASE64: ${{ secrets.IOS_SIGNING_STATE_BASE64 }}
           RESET_SIGNING_STATE: ${{ inputs.reset_state || false }}
+          SIGNING_REPOSITORY_ID: ${{ vars.SIGNING_REPOSITORY_ID }}
+          SIGNING_OWNER_ID: ${{ vars.SIGNING_OWNER_ID }}
         run: python signing/ci_renew.py
       - name: Upload encrypted signing files
         if: always() && steps.renew.outputs.publish == 'true'

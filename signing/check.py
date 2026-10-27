@@ -12,7 +12,7 @@ from tool import check, install
 def main():
     root = Path(os.environ.get("RUNNER_TEMP", ".lumapocket-signing")) / "lumapocket-signing-probe"
     root.mkdir(parents=True, exist_ok=True)
-    suite = unittest.defaultTestLoader.discover(str(Path(__file__).parent), pattern="test_signing.py")
+    suite = unittest.defaultTestLoader.discover(str(Path(__file__).parent), pattern="test_*.py")
     result = unittest.TextTestRunner(verbosity=1).run(suite)
     if not result.wasSuccessful():
         raise RuntimeError("Signing regression tests failed")
