@@ -27,12 +27,19 @@ jobs:
         with:
           persist-credentials: false
       - name: Cache official Flutter SDK
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        id: flutter-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: ${{ runner.temp }}/lumapocket-flutter
           key: flutter-ios-${{ runner.os }}-${{ runner.arch }}-3.47.2
       - name: Install pinned Flutter SDK
         run: python3 ci/setup_flutter.py
+      - name: Save installed Flutter SDK
+        if: steps.flutter-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ${{ runner.temp }}/lumapocket-flutter
+          key: flutter-ios-${{ runner.os }}-${{ runner.arch }}-3.47.2
       - name: Cache Rust downloads
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
