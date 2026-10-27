@@ -77,8 +77,8 @@ def authorize(home, args, password):
 
 
 def publish(home, password):
-    metadata = json.loads(gh(["repo", "view", REPOSITORY, "--json", "databaseId,nameWithOwner"]))
-    if metadata.get("databaseId") != 1435778522 or metadata.get("nameWithOwner") != REPOSITORY:
+    metadata = json.loads(gh(["api", "repos/" + REPOSITORY]))
+    if metadata.get("id") != 1435778522 or metadata.get("full_name") != REPOSITORY:
         raise SigningError("dedicated_repository_required")
     seed = base64.b64encode((home / "bootstrap-state.gpg").read_bytes())
     if len(seed) > 45000:

@@ -35,6 +35,8 @@ signing\start.cmd enable
 
 本机状态位于 Git 忽略的 `.lumapocket-signing`。Windows 上的解密密钥由当前用户的
 DPAPI 保护；请保留这个目录，以便下载和解密自己的签名包。
+如果本机授权已经成功保存，而上传 Secrets 时网络中断，可执行
+`signing\start.cmd publish` 重试上传和首轮验证，无需再次输入 Apple 密码。
 
 ## 自动任务做什么
 
