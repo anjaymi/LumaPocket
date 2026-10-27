@@ -1,0 +1,40 @@
+name: Free signing experiment
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [validate, renew]
+        default: validate
+        description: Validate tooling, or renew using an authorized encrypted state
+      reset_state:
+        type: boolean
+        default: false
+        description: Use the newly uploaded bootstrap state instead of the previous run
+  push:
+    branches: [main]
+    paths: ['signing/**', '.github/workflows/free-signing.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: free-signing-experiment
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.repository == 'anjaymi/LumaPocket' && github.actor == 'anjaymi' && (github.event_name == 'push' || inputs.mode == 'validate')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Check frozen signing tool without an Apple account
+        run: python signing/tool.py --root "${{ runner.temp }}/lumapocket-signing-tool"

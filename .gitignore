@@ -13,3 +13,8 @@
 
 __pycache__/
 *.pyc
+
+!/signing/
+!/signing/**
+/signing/__pycache__/
+/.lumapocket-signing/
