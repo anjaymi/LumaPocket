@@ -3,9 +3,9 @@ set -euo pipefail
 RUST_VERSION=$(python3 -c 'import json; print(json.load(open("build.json"))["rustVersion"])')
 rustup toolchain install "$RUST_VERSION" --profile minimal
 rustup target add aarch64-apple-ios --toolchain "$RUST_VERSION"
-export IPHONEOS_DEPLOYMENT_TARGET=15.0
-export SDKROOT="$(xcrun --sdk iphoneos --show-sdk-path)"
-(cd "$LUMAPOCKET_WORKSPACE/rust-core" && cargo "+$RUST_VERSION" build --locked --release --target aarch64-apple-ios -p nai_core_tokenizer)
+# Scope the iPhone SDK to the cross compiler; CocoaPods runs macOS host tools.
+
+(cd "$LUMAPOCKET_WORKSPACE/rust-core" && SDKROOT="$(xcrun --sdk iphoneos --show-sdk-path)" IPHONEOS_DEPLOYMENT_TARGET=15.0 cargo "+$RUST_VERSION" build --locked --release --target aarch64-apple-ios -p nai_core_tokenizer)
 mkdir -p "$LUMAPOCKET_APP/ios/Native"
 cp "$LUMAPOCKET_WORKSPACE/rust-core/target/aarch64-apple-ios/release/libnai_core_tokenizer.a" "$LUMAPOCKET_APP/ios/Native/"
 ruby ci/configure_ios.rb
