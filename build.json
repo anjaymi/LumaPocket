@@ -4,6 +4,12 @@
   "displayName": "LumaPocket",
   "bundleIdentifier": "io.lumapocket.client",
   "minimumIOSVersion": "15.0",
-  "applicationVersion": "1.1.28+30",
-  "sourceEncryptedSha256": "0f9a702eacc03a980aa93c6c3e911d1c5e570f9f252b71999a568746068a02d2"
+  "applicationVersion": "1.1.29+31",
+  "sourceEncryptedSha256": "9bc3eec582fd4e4de83ae45bdc11b6cf9e10ab1fb31631604da1f83ecd821e84",
+  "bundledWorkflowLibrary": {
+    "artists": 122,
+    "wildcards": 100,
+    "bundledPreviewImages": 29,
+    "librarySha256": "a6896480d6f17b5d543065f13bb582abcf5b9b83dd65a07bd82801fe18341914"
+  }
 }
