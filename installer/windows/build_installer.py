@@ -11,6 +11,7 @@ import ssl
 import zipfile
 
 from prepare_build import HERE, ROOT, prepare
+from installer_app import __version__
 
 
 def build(output, resources, icon):
@@ -46,7 +47,7 @@ def build(output, resources, icon):
                     if file.is_file():
                         package.write(file, 'third-party/' + str(relative).replace('\\', '/'))
     notices = [
-        'LumaPocket 安装助手 0.1.0 · 实验版',
+        f'LumaPocket 安装助手 {__version__} · 实验版',
         '安装助手源代码与所用 GPL 组件源码包含在 source.zip。',
         'SideSign: https://github.com/SideStore/SideSign (GPL-3.0)',
         'Compatibility build: https://github.com/anjaymi/LumaPocket/releases/tag/signer-compat-20261029-r2',
@@ -80,7 +81,7 @@ def build(output, resources, icon):
         *runtime_data, *metadata, str(stage / 'launcher.py')]
     subprocess.run(command, check=True)
     executable = output / 'dist' / 'LumaPocket-Installer.exe'
-    manifest = {'version': '0.1.0', 'file': executable.name, 'bytes': executable.stat().st_size,
+    manifest = {'version': __version__, 'file': executable.name, 'bytes': executable.stat().st_size,
                 'sha256': hashlib.sha256(executable.read_bytes()).hexdigest(),
                 'signerVersion': '0.1.7-lumapocket-v3.2', 'containsPersonalAuthorization': False}
     (output / 'dist' / 'installer-manifest.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')

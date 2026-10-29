@@ -11,13 +11,14 @@ from .accounts import account_info, clean_login_temporary
 from .paths import ASSETS, data_dir
 from .tasks import Task
 from .tooling import apple_root_trusted
+from . import __version__
 
 BG, INK, MUTED, ACCENT = '#f6f7fb', '#20283a', '#6b7386', '#4e62d9'
 ERRORS = {
     'apple_certificate_limit_reached': 'Apple 开发证书名额已满（7460）。登录会话已保留，需要处理现有证书后重试；请勿连续重新登录。',
     'windows_cpp_runtime_required': '请通过“Windows 运行库”链接安装 Microsoft 官方 Visual C++ x64 运行库，再重试。',
-    'apple_device_driver_unavailable': '未找到 Apple 设备服务。请先安装 Apple 设备应用，再连接并解锁 iPad。',
-    'device_trust_required': '请解锁 iPad，在设备上信任这台电脑，然后重试。',
+    'apple_device_driver_unavailable': '未找到 Apple 设备服务。请先安装 Apple 设备应用，再连接并解锁 iPhone / iPad。',
+    'device_trust_required': '请解锁 iPhone / iPad，在设备上信任这台电脑，然后重试。',
     'device_connection_lost': '设备连接已中断。请检查数据线和设备锁屏状态。',
     'device_install_failed': '设备安装未完成。请检查连接、开发者模式和设备剩余空间。',
     'device_rejected_signature': '设备未接受此安装包的签名。请检查签名有效期和设备归属。',
@@ -51,7 +52,7 @@ class Window:
         self.devices = []
         self.ipa = None
         self.pending_sign = False
-        root.title('LumaPocket · 安装助手')
+        root.title('LumaPocket · 安装助手 ' + __version__)
         height = min(820, max(620, root.winfo_screenheight() - 100))
         root.geometry('850x' + str(height))
         root.minsize(760, min(620, height))
@@ -86,9 +87,9 @@ class Window:
         top = ttk.Frame(outer)
         top.pack(fill='x')
         self.label(top, 'LumaPocket', 23, bold=True).pack(side='left')
-        self.label(top, '安装助手 · 实验版', 10, MUTED).pack(side='left', padx=14, pady=(11, 0))
+        self.label(top, '安装助手 ' + __version__ + ' · 实验版', 10, MUTED).pack(side='left', padx=14, pady=(11, 0))
         ttk.Button(top, text='源码与说明', command=self.export_sources).pack(side='right')
-        self.label(outer, '连接你的 iPad，用自己的账号完成签名和安装。', color=MUTED).pack(anchor='w', pady=(5, 22))
+        self.label(outer, '连接 iPhone / iPad，自动获取最新版，用自己的账号签名并安装。', color=MUTED).pack(anchor='w', pady=(5, 22))
 
         self.label(outer, '01   连接设备', 12, bold=True).pack(anchor='w')
         row = ttk.Frame(outer)
@@ -163,7 +164,7 @@ class Window:
         label.pack(side='left')
         self.login_button = ttk.Button(row, text='登录 / 切换 GitHub', command=lambda: self.start('github-login'))
         self.login_button.pack(side='right')
-        self.label(parent, '首次授权会在你的账号下创建公开的个人签名仓库。个人签名文件以加密形式保存。', 9, MUTED, justify='left', wraplength=680).pack(anchor='w')
+        self.label(parent, '应用由 LumaPocket 公开发布页提供，不需要你准备或上传源码。\n助手会自动创建你的个人签名仓库，签名状态按账号隔离并加密保存。', 9, MUTED, justify='left', wraplength=680).pack(anchor='w')
         form = ttk.Frame(parent)
         form.pack(fill='x', pady=(16, 4))
         self.label(form, '03   Apple 账号邮箱', 12, bold=True).grid(row=0, column=0, sticky='w')
@@ -207,7 +208,7 @@ class Window:
     def show_first_launch(self):
         for child in self.first_launch.winfo_children():
             child.destroy()
-        self.label(self.first_launch, '在 iPad 上完成首次打开', 11, bold=True).pack(anchor='w')
+        self.label(self.first_launch, '在 iPhone / iPad 上完成首次打开', 11, bold=True).pack(anchor='w')
         self.label(self.first_launch,
             '① 设置 → 通用 → VPN 与设备管理 → 开发者 App，选择本次签名的 Apple 账号，点“信任”或“验证 App”。验证时保持联网。\n'
             '② 如果提示需要开发者模式：设置 → 隐私与安全性 → 开发者模式，开启后按系统提示重启。\n'
@@ -381,7 +382,7 @@ class Window:
                 self.tabs.select(self.install_tab)
                 self.status.set('签名 IPA 已下载，可以安装到所选设备。')
         elif name == 'installed':
-            self.status.set('设备已报告安装完成。请在 iPad 上完成首次打开设置。')
+            self.status.set('设备已报告安装完成。请在 iPhone / iPad 上完成首次打开设置。')
             self.tabs.select(self.install_tab)
             self.show_first_launch()
         elif name in ('download_progress', 'install_progress'):
