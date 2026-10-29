@@ -4,8 +4,8 @@
   "displayName": "LumaPocket",
   "bundleIdentifier": "io.lumapocket.client",
   "minimumIOSVersion": "15.0",
-  "applicationVersion": "1.1.29+31",
-  "sourceEncryptedSha256": "a01b213a94be9b41891f09f05f36df0885d239f0728476df49976a4cbd4185c0",
+  "applicationVersion": "1.1.29+32",
+  "sourceEncryptedSha256": "181b03027576f10c7e95e710b706756ee771af8ebc6b58e6390de1daae86d1c1",
   "bundledWorkflowLibrary": {
     "artists": 122,
     "wildcards": 100,
