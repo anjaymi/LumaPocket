@@ -18,3 +18,9 @@ __pycache__/
 !/signing/**
 /signing/__pycache__/
 /.lumapocket-signing/
+
+!/installer/
+!/installer/windows/
+!/installer/windows/**
+/installer/windows/.build/
+/installer/windows/**/__pycache__/
